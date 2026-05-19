@@ -10,17 +10,8 @@ from pathlib import Path
 
 MODEL_DIR = Path(__file__).parent.parent / "models"
 
-# Thresholds for verdict bucketing
-BLOCK_THRESHOLD = 0.70
-REVIEW_THRESHOLD = 0.35
-
-# Expected model performance metrics loaded from evaluation
-# These are populated after notebook 05_evaluation runs
-EVAL_METRICS = {
-    "precision_at_block": 0.0,
-    "recall_at_block": 0.0,
-    "f1_at_block": 0.0,
-}
+BLOCK_THRESHOLD = float(os.getenv("THRESHOLD_BLOCK", "0.70"))
+REVIEW_THRESHOLD = float(os.getenv("THRESHOLD_REVIEW", "0.35"))
 
 
 class FraudDetectionModel:
@@ -33,17 +24,17 @@ class FraudDetectionModel:
         self._loaded = False
 
     def load(self):
-        lgbm_path = MODEL_DIR / "lgbm_model.pkl"
+        model_path = Path(os.getenv("MODEL_PATH", str(MODEL_DIR / "lgbm_model.pkl")))
         meta_path = MODEL_DIR / "meta_learner.pkl"
         feature_path = MODEL_DIR / "feature_names.pkl"
 
-        if not lgbm_path.exists():
+        if not model_path.exists():
             raise FileNotFoundError(
-                f"Model not found at {lgbm_path}. "
+                f"Model not found at {model_path}. "
                 "Run notebooks 03 and 04 first and download the artifacts."
             )
 
-        with open(lgbm_path, "rb") as f:
+        with open(model_path, "rb") as f:
             self.lgbm = pickle.load(f)
 
         with open(meta_path, "rb") as f:
@@ -53,7 +44,6 @@ class FraudDetectionModel:
             with open(feature_path, "rb") as f:
                 self.feature_names = pickle.load(f)
 
-        # MLP is optional — ensemble degrades gracefully without it
         mlp_path = MODEL_DIR / "mlp_model.pkl"
         if mlp_path.exists():
             with open(mlp_path, "rb") as f:
@@ -79,7 +69,6 @@ class FraudDetectionModel:
         final_prob = float(self.meta_learner.predict_proba(meta_features)[0, 1])
 
         shap_values = self.shap_explainer.shap_values(x)
-        # For binary classification, shap_values is list[pos_class, neg_class] or array
         if isinstance(shap_values, list):
             sv = shap_values[1][0]
         else:
@@ -112,7 +101,6 @@ def _get_verdict(prob: float) -> str:
     return "APPROVE"
 
 
-# Singleton — loaded once at startup
 _model_instance: FraudDetectionModel | None = None
 
 
