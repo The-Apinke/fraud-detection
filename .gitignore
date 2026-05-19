@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Data — never commit raw data
+data/raw/
+data/processed/
+
+# Models — large binary files go to Git LFS or are downloaded
+models/*.pkl
+models/*.joblib
+models/*.json
+!models/.gitkeep
+
+# Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Reports / figures generated at runtime
+reports/figures/
+!reports/figures/.gitkeep
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Railway / deployment
+*.log
